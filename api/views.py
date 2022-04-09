@@ -32,7 +32,7 @@ def getRoutes(request):
             'Endpoint': '/notes/id/',
             'method': 'DELETE',
             'body': None,
-            'description': 'Deletes and exiting note'
+            'description': 'Deletes an existing note'
         },
     ]
 
