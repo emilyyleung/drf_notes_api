@@ -44,13 +44,23 @@ def getRoutes(request):
     return Response(routes)
 
 @api_view(['GET'])
-def notesList(request):
+def getNotes(request):
     notes = Note.objects.all()
     serializer = NoteSerializer(notes, many=True)
     return Response(serializer.data)
 
-@api_view(['GET'])
-def noteDetail(request, pk):
-    note = Note.objects.get(id=pk)
-    serializer = NoteSerializer(note, many=False)
-    return Response(serializer.data)
+@api_view(['GET', 'PUT'])
+def crudNote(request, pk):
+    if (request.method == 'GET'):
+        note = Note.objects.get(id=pk)
+        serializer = NoteSerializer(note, many=False)
+        return Response(serializer.data)
+    elif (request.method == 'PUT'):
+        data = request.data
+        note = Note.objects.get(id=pk)
+        serializer = NoteSerializer(instance=note, data=data)
+        if serializer.is_valid(): # checks if serialized data is valid
+            serializer.save() # save updates to database
+        return Response(serializer.data) # return updated record
+    else:
+        return Response("No action for this request method")
