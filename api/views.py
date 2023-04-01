@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.shortcuts import get_object_or_404
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from . serializers import *
@@ -22,19 +22,19 @@ def getRoutes(request):
             'description': 'Creates new note with data sent in post request'
         },
         {
-            'Endpoint': '/notes/id/',
+            'Endpoint': '/notes/<id>/',
             'method': 'GET',
             'body': None,
             'description': 'Returns a single note object'
         },
         {
-            'Endpoint': '/notes/id/',
+            'Endpoint': '/notes/<id>/',
             'method': 'PUT',
             'body': {'body': ""},
             'description': 'Creates an existing note with data sent in post request'
         },
         {
-            'Endpoint': '/notes/id/',
+            'Endpoint': '/notes/<id>/',
             'method': 'DELETE',
             'body': None,
             'description': 'Deletes an existing note'
@@ -43,24 +43,38 @@ def getRoutes(request):
 
     return Response(routes)
 
-@api_view(['GET'])
+@api_view(['GET', 'POST'])
 def getNotes(request):
-    notes = Note.objects.all()
-    serializer = NoteSerializer(notes, many=True)
-    return Response(serializer.data)
+    if (request.method == 'GET'):
+        notes = Note.objects.all()
+        serializer = NoteSerializer(notes, many=True)
+        return Response(serializer.data)
+    elif (request.method == 'POST'):
+        data = request.data
+        note = Note.objects.create(body=data['body'])
+        serializer = NoteSerializer(note, many=False)
+        return Response(serializer.data)
+    else:
+        return Response("No action for this request method")
 
-@api_view(['GET', 'PUT'])
+@api_view(['GET', 'PUT', 'DELETE'])
 def crudNote(request, pk):
     if (request.method == 'GET'):
-        note = Note.objects.get(id=pk)
+        note = get_object_or_404(Note, id=pk)
         serializer = NoteSerializer(note, many=False)
         return Response(serializer.data)
     elif (request.method == 'PUT'):
         data = request.data
-        note = Note.objects.get(id=pk)
+        note = get_object_or_404(Note, id=pk)
         serializer = NoteSerializer(instance=note, data=data)
-        if serializer.is_valid(): # checks if serialized data is valid
-            serializer.save() # save updates to database
-        return Response(serializer.data) # return updated record
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        else:
+            return Response("Something went wrong")
+    elif (request.method == 'DELETE'):
+        note = get_object_or_404(Note, id=pk)
+        note.delete()
+        return Response('Note was deleted')
     else:
         return Response("No action for this request method")
